@@ -5,11 +5,6 @@ import { Link, useNavigate } from "react-router";
 import { Roles } from "../../Types/RoleType";
 import userStore from "./UserStore";
 
-const style = {
-    position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-    width: 400, bgcolor: 'background.paper', border: '2px solid #000', boxShadow: 24, p: 4,
-};
-const alertStyle = { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 400, bgcolor: 'background.paper', boxShadow: 24, p: 2, outline: 'none', };
 
 const LogIn = observer(() => {
     const navigate = useNavigate(); 

@@ -16,9 +16,11 @@ const UploadFile = observer(() => {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       const selectedFile = event.target.files[0];
-      if (selectedFile.type !== "application/pdf" && selectedFile.type !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+      if (selectedFile.type !== "application/pdf" && selectedFile.type !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document"&&dialogMessage) {
         setDialogMessage("Invalid file type. Please upload a PDF or DOCX file.");
+       if(dialogSeverity !== "error") 
         setDialogSeverity("error");
+        if(!openDialog)
         setOpenDialog(true);
         setFile(null);
         setFileName("");
@@ -70,9 +72,7 @@ const UploadFile = observer(() => {
     setPassword("");
   };
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-  };
+ 
 
   return (
     <>

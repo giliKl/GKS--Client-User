@@ -5,7 +5,6 @@ import NoFileShare from "../Massages/NoFileShare";
 import { Box, Collapse, Grid2 as Grid, Typography } from "@mui/material";
 import FileCardShare from "./FileCardShare";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
-import TrailUploadFromComputer from "./TrailUploadFromComputer";
 import userStore from "../Users/UserStore";
 import { UserFileType } from "../../Types/UserFileType";
 
@@ -13,6 +12,7 @@ const  ViewFile= observer(() =>{
 
   const [openFiles, setOpenFiles] = useState<{ [key: string]: boolean }>({});
 
+  
    useEffect(() => {
       const fetchData = async () => {
         try {
@@ -71,7 +71,6 @@ const  ViewFile= observer(() =>{
           </Box>
         );
       })}
-      {/* <TrailUploadFromComputer/> */}
     </Box>
   );
 }

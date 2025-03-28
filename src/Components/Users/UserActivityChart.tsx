@@ -15,7 +15,7 @@ import axios from "axios";
 import { Box, Typography } from '@mui/material'; 
 import userStore from "./UserStore";
 
-const url: string = `http://localhost:3000/api/UserActivity`;
+const url: string = `${import.meta.env.VITE_API_URL}/UserActivity`;
 const UserActivityGraphs: React.FC = () => {
   const [monthlyData, setMonthlyData] = useState<{ day: number; visits: number }[]>([]);
   const [yearlyData, setYearlyData] = useState<{ month: string; visits: number }[]>([]);
