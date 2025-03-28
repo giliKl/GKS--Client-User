@@ -15,17 +15,21 @@
     "@mui/icons-material": "^6.4.7",
     "@mui/material": "^6.4.7",
     "@mui/styled-engine": "^6.4.6",
+    "@pdftron/webviewer": "^11.3.0",
     "@reduxjs/toolkit": "^2.6.1",
     "axios": "^1.8.3",
     "mobx": "^6.13.6",
     "mobx-react": "^9.2.0",
     "react": "^19.0.0",
+    "react-doc-viewer": "^0.1.14",
     "react-dom": "^19.0.0",
     "react-redux": "^9.2.0",
-    "react-router": "^7.3.0"
+    "react-router": "^7.3.0",
+    "recharts": "^2.15.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
+    "@types/node": "^22.13.14",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",

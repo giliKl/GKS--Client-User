@@ -1,68 +1,72 @@
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
-import Menu from '@mui/material/Menu';
-import { Box, Button, MenuItem, Tooltip } from "@mui/material"
-import { Link } from 'react-router';
-import { useState } from 'react';
+import { Box, Button, IconButton, Menu, MenuItem } from "@mui/material";
+import MenuIcon from '@mui/icons-material/Menu';
+import React, { useState } from "react";
+import { MoreVert } from "@mui/icons-material";
+import { Link } from "react-router";
+import SideBar from "./SideBar";
+
 const NavBar = () => {
-    const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
-    const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const handleLoginSuccess = () => {
-        setIsLoggedIn(true);
-    };
+  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
+  const [openSidebar, setOpenSidebar] = useState(false);
 
-    const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
-        setAnchorElUser(event.currentTarget);
-    };
+  const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorElNav(event.currentTarget);
+  };
 
-    const handleCloseNavMenu = () => {
-        setAnchorElNav(null);
-    };
+  const handleCloseNavMenu = () => {
+    setAnchorElNav(null);
+  };
 
-    const handleCloseUserMenu = () => {
-        setAnchorElUser(null);
-    };
+  const handleToggleSidebar = () => {
+    setOpenSidebar(!openSidebar);
+  };
 
-    const handleLogout = () => {
-        setIsLoggedIn(false);
-    };
+  return (
+    <>
+      <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
+        <Button
+          size="large"
+          aria-label="open menu"
+          aria-controls="menu-appbar"
+          aria-haspopup="true"
+          onClick={handleOpenNavMenu}
+          color="inherit"
+        >
+          <MenuIcon sx={{ mr: 1, color: "#ED3D48", backgroundColor: "#FFFFFF" }} />
+        </Button>
+        <Menu
+          id="menu-appbar"
+          anchorEl={anchorElNav}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+          keepMounted
+          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+          open={Boolean(anchorElNav)}
+          onClose={handleCloseNavMenu}
+        > 
+          <MenuItem onClick={handleCloseNavMenu} >
+            <Button sx={{ color: "#FFFFFF"}} component={Link} to='/about'>About</Button>
+          </MenuItem>
+          <MenuItem onClick={handleCloseNavMenu}>
+            <Button sx={{ color: "#FFFFFF" }} component={Link} to='/'>Dashboard</Button>
+          </MenuItem>
+        </Menu>
+      </Box>
 
-    return (
-        <>
-            <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-                <Button component={Link} to='/about' onClick={handleCloseNavMenu} sx={{ my: 2, color: 'white', display: 'block', textDecorationLine: "none" }}>ABOUT </Button>
-                <Button component={Link} to='/' onClick={handleCloseNavMenu} sx={{ my: 2, color: 'white', display: 'block', textDecorationLine: "none" }}>HOME</Button>
-            </Box>
-            <Box sx={{ flexGrow: 0 }}>
-                <Tooltip title="Open settings">
-                    <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                        {/* <UserDetails /> */}
-                    </IconButton>
-                </Tooltip>
-                {isLoggedIn && <Menu
-                    sx={{ mt: '45px' }}
-                    id="menu-appbar"
-                    anchorEl={anchorElUser}
-                    anchorOrigin={{
-                        vertical: 'top',
-                        horizontal: 'right',
-                    }}
-                    keepMounted
-                    transformOrigin={{
-                        vertical: 'top',
-                        horizontal: 'right',
-                    }}
-                    open={Boolean(anchorElUser)}
-                    onClose={handleCloseUserMenu}
-                >
-                    <MenuItem onClick={handleCloseUserMenu}>
-                        <Typography sx={{ textAlign: 'center' }} onClick={handleLogout}>Log Out</Typography>
-                    </MenuItem>
-                </Menu>}
-            </Box>
-        </>
-    )
+      {/* NavBar for larger screens */}
+      <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, justifyContent: 'center', gap: '2cm' }}>
+        <Button sx={{ color: "#FFFFFF" }} component={Link} to='/'>Dashboard</Button>
+        <Button sx={{ color: "#FFFFFF" }} component={Link} to='/about'>About</Button>
+      </Box>
+
+      {/* Sidebar Icon */}
+      <IconButton sx={{ color: "#579fba", position: "absolute", right: 0, width: 30, top: 300 }} onClick={handleToggleSidebar}>
+        <MoreVert sx={{ fontSize: 80 }} />
+      </IconButton>
+
+      {/* Drawer sidebar */}
+      <SideBar open={openSidebar} onClose={handleToggleSidebar} />
+    </>
+  );
 };
 
 export default NavBar;

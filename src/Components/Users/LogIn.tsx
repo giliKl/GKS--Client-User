@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { observer } from "mobx-react-lite";
-import { Button, Grid, Modal, Box, TextField, Alert } from "@mui/material";
+import { Button, TextField, Grid2 as Grid, Box, Alert,  } from '@mui/material';
 import { Link, useNavigate } from "react-router";
 import { Roles } from "../../Types/RoleType";
 import userStore from "./UserStore";
@@ -13,7 +13,6 @@ const alertStyle = { position: 'absolute', top: '50%', left: '50%', transform: '
 
 const LogIn = observer(() => {
     const navigate = useNavigate(); 
-    const [open, setOpen] = useState(true);
     const emailRef = useRef<HTMLInputElement>(null);
     const passwordRef = useRef<HTMLInputElement>(null);
     const [alertInfo, setAlertInfo] = useState<{ severity: 'success' | 'error' | 'warning' | 'info', message: string } | null>(null);
@@ -21,6 +20,12 @@ const LogIn = observer(() => {
     const validateEmail = (email: string) => {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return re.test(email);
+    };
+
+    const validatePasswordStrength = (password: string) => {
+        if (password.length < 6) return 'Weak';
+        if (password.length < 10) return 'Moderate';
+        return 'Strong';
     };
 
     const handleSubmit = async (e: { preventDefault: () => void; }) => {
@@ -32,48 +37,52 @@ const LogIn = observer(() => {
                 setAlertInfo({ severity: 'warning', message: 'Please enter a valid email address.' });
                 return;
             }
+            const passwordStrength = validatePasswordStrength(password);
+            if (passwordStrength === 'Weak') {
+                setAlertInfo({ severity: 'warning', message: 'Password is too weak. Please choose a stronger password.' });
+                return;
+            }
             try {
-                await userStore.loginUser(email, password,[Roles.User]);
-                setAlertInfo({ severity: 'success', message: 'Successfully logged in!' });
+                await userStore.loginUser(email, password, [Roles.User]).then(() => {               
+                console.log(userStore.user.id, userStore.token);
                 navigate('/');
-            } catch (e: any) {
-                if (e.response?.status === 401) {
-                    setAlertInfo({ severity: 'error', message: 'Invalid credentials' });
-                } else {
-                    setAlertInfo({ severity: 'error', message: 'An unexpected error occurred. Please try again later.' });
-                }
-            } finally {
-                setOpen(false);
+                });
+                
+                setAlertInfo({ severity: 'success', message: 'Successfully logged in!' });
+            } catch (error) {            
+                setAlertInfo({ severity: 'error', message: 'Failed to login. Please check your credentials and try again.' });
+                console.error('Login error:', error);
             }
         } else {
-            setAlertInfo({ severity: 'error', message: 'Please fill in all required fields' });
+            setAlertInfo({ severity: 'warning', message: 'Please fill in all required fields' });
         }
     };
 
     return (<>
-        <Modal open={!!alertInfo} onClose={() => setAlertInfo(null)}>
-            <Box sx={alertStyle}>
-                {alertInfo && (
-                    <Alert severity={alertInfo.severity} onClose={() => setAlertInfo(null)} sx={{ width: '100%' }}>
-                        {alertInfo.message}
-                    </Alert>
-                )}
-            </Box>
-        </Modal>
-        <Grid container>
-            <Grid item xs={4}>
-                <Button sx={{ my: 2, color: 'white', display: 'block' }} onClick={() => setOpen(!open)}>Login</Button>
-            </Grid>
-        </Grid>
-            <Box sx={style}>
-                <form onSubmit={handleSubmit}>
-                    <TextField label='userEmail' inputRef={emailRef} fullWidth /><br /><br />
-                    <TextField type="password" label='password' inputRef={passwordRef} fullWidth /><br /><br />
-                    <Button type="submit" variant="contained">Login</Button><br /><br />
-                    <p>Don't have an account?</p>
-                    <Button type="button" component={Link} to='/register'>Sign up</Button>
-                </form>
-            </Box>
+       <Box sx={{ maxWidth: 400, mx: 'auto', mt: 5 }}>
+            {alertInfo && (
+                <Alert severity={alertInfo.severity} onClose={() => setAlertInfo(null)} sx={{ mb: 2 }}>
+                    {alertInfo.message}
+                </Alert>
+            )}
+            <form onSubmit={handleSubmit}>
+                <Grid container spacing={2}>
+                    <Grid size={12}>
+                        <TextField label="Email" inputRef={emailRef} fullWidth required />
+                    </Grid>
+                    <Grid size={12}>
+                        <TextField type="password" label="Password" inputRef={passwordRef} fullWidth required />
+                    </Grid>
+                    <Grid size={12}>
+                        <Button type="submit" variant="contained" color="primary" fullWidth>
+                            Login
+                        </Button>
+                    </Grid>
+                </Grid>
+            </form>
+            <br />
+            <Button type="button" component={Link} to='/register'> don't have an account? Sign up</Button>
+        </Box>
     </>);
 });
 

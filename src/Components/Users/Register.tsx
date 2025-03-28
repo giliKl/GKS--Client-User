@@ -1,46 +1,38 @@
-import { ChangeEvent, FormEvent, useState } from 'react';
-import  { AxiosError } from 'axios';
-import { Box, Button, Grid2 as Grid, Modal, TextField, Alert } from '@mui/material';
+import {  FormEvent, useRef, useState } from 'react';
+import { Button, TextField, Grid2 as Grid, Box, Alert, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import { UserType } from '../../Types/UserType';
-import { AppDispatch } from '../Store/Store';
-import { useDispatch } from 'react-redux';
-import { registerUser } from '../Store/UserSlice';
 import { observer } from 'mobx-react';
 import { Roles } from '../../Types/RoleType';
 import userStore from './UserStore';
+import { Link, useNavigate } from 'react-router';
 
 const Register = observer(() => {
-    const alertStyle = { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 400, bgcolor: 'background.paper', outline: 'none', };
-    const style = { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 400, bgcolor: 'background.paper', border: '2px solid #000', boxShadow: 24, p: 4, };
+    const navigate = useNavigate();
+
+    const nameRef = useRef<HTMLInputElement>(null);
+    const emailRef = useRef<HTMLInputElement>(null);
+    const passwordRef = useRef<HTMLInputElement>(null);
     const [alertInfo, setAlertInfo] = useState<{ severity: 'success' | 'error' | 'warning' | 'info', message: string } | null>(null);
-    const [open, setOpen] = useState(true);
     const [verificationCode, setVerificationCode] = useState<string>('');
     const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
     const [inputCode, setInputCode] = useState<string>('');
-    const [data, setData] = useState<UserType>({
-        id: 0,
-        name: '',
-        email: '',
-        password: '',
-        filesId: [],
-        isActive: true,
-        roles: []
-    });
 
-    const handleOpen = () => {
-        setOpen(!open);
-    };
-
-    const handelChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setData(prevS => ({
-            ...prevS,
-            [name]: value
-        }));
-    };
     const validateEmail = (email: string) => {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return re.test(email);
+    };
+
+    const sendVerificationCode = (email: string) => {
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        setVerificationCode(code);
+        const subject = `Verify your email for GKS ${code}`
+        const body = `Hello, ${nameRef.current?.value}. Your verification code for GKS is ${code}.\n Please use it to complete your registration process.`
+        userStore.sendEmail(email, subject, body);
+        console.log(`Verification code sent to ${email}: ${code}`);
+        setIsDialogOpen(true);
+        userStore.sendEmail(email, subject, body);
+        console.log(`Verification code sent to ${email}: ${code}`);
+        setIsDialogOpen(true);
     };
 
     const validatePasswordStrength = (password: string) => {
@@ -48,16 +40,12 @@ const Register = observer(() => {
         if (password.length < 10) return 'Moderate';
         return 'Strong';
     };
-    const sendVerificationCode = (email: string) => {
-        const code = Math.floor(100000 + Math.random() * 900000).toString();
-        setVerificationCode(code);
-        // Simulate sending email
-        console.log(`Verification code sent to ${email}: ${code}`);
-        setIsDialogOpen(true);
-    };
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const { name, password, email } = data;
+        const name = nameRef.current?.value;
+        const email = emailRef.current?.value;
+        const password = passwordRef.current?.value;
+
         if (email && password && name) {
             if (!validateEmail(email)) {
                 setAlertInfo({ severity: 'warning', message: 'Please enter a valid email address.' });
@@ -69,53 +57,95 @@ const Register = observer(() => {
                 setAlertInfo({ severity: 'warning', message: 'Password is too weak. Please choose a stronger password.' });
                 return;
             }
-            try {
-                userStore.registerUser({name:data.name,email:data.email,password:data.password,isActive:data.isActive}, [Roles.User]);
-                setAlertInfo({ severity: 'success', message: 'Successfully registation!' });
-            }
-            catch (e: AxiosError | any) {
-                if (e.response?.status === 401) {
-                    setAlertInfo({ severity: 'error', message: 'Invalid credentials' });
-                } else {
-                    setAlertInfo({ severity: 'error', message: 'An unexpected error occurred. Please try again later.' });
-                }
-            }
-            finally {
-                setOpen(false);
-            }
-            setAlertInfo({ severity: 'success', message: 'Registration successful!' });
+
+            sendVerificationCode(email);
         }
         else {
-            setAlertInfo({ severity: 'error', message: 'Please fill in all required fields' });
+            setAlertInfo({ severity: 'warning', message: 'Please fill in all fields.' });
         }
     }
+    const handleVerifyCode = async () => {
+        if (inputCode === verificationCode) {
+            const name = nameRef.current?.value;
+            const email = emailRef.current?.value;
+            const password = passwordRef.current?.value;
 
+            const newUser: Partial<UserType> = {
+               
+                name,
+                email,
+                password,
+                filesId: [],
+                isActive: true
+
+            };
+
+            try {
+                await userStore.registerUser(newUser,[Roles.User]);
+                navigate('/');
+                setAlertInfo({ severity: 'success', message: 'Successfully registered!' });
+                setIsDialogOpen(false);
+            } catch (error) {
+                setAlertInfo({ severity: 'error', message: 'An unexpected error occurred. Please try again later.' });
+                console.error('Register error:', error);
+            }
+        } else {
+            setAlertInfo({ severity: 'error', message: 'Verification code is incorrect.' });
+        }
+    };
     return (
-        <>
-            <Modal
-                open={!!alertInfo}
-                onClose={() => setAlertInfo(null)} >
-                <Box sx={alertStyle}>
-                    {alertInfo && (
-                        <Alert severity={alertInfo.severity} onClose={() => setAlertInfo(null)} sx={{ width: '100%' }}> {alertInfo.message}
-                        </Alert>)}
-                </Box>
-            </Modal>
-            <Grid container>
-                <Grid size={4}><Button sx={{ my: 2, color: 'white', display: 'block' }} onClick={() => handleOpen()}>Registration</Button></Grid>
+        <Box sx={{ maxWidth: 400, mx: 'auto', mt: 5 }}>
+        {alertInfo && (
+            <Alert severity={alertInfo.severity} onClose={() => setAlertInfo(null)} sx={{ mb: 2 }}>
+                {alertInfo.message}
+            </Alert>
+        )}
+        <form onSubmit={handleSubmit}>
+            <Grid container spacing={2}>
+                <Grid size={12}>
+                    <TextField label="Name" inputRef={nameRef} fullWidth required />
+                </Grid>
+                <Grid size={12}>
+                    <TextField label="Email" inputRef={emailRef} fullWidth required />
+                </Grid>
+                <Grid size={12}>
+                    <TextField type="password" label="Password" inputRef={passwordRef} fullWidth required />
+                </Grid>
+                <Grid size={12}>
+                    <Button type="submit" variant="contained" color="primary" fullWidth>
+                        Register
+                    </Button>
+                </Grid>
+                <br />
+                <Button type="button" component={Link} to='/login'> Have an account? Sign up</Button>
+
             </Grid>
-                <Box sx={style}>
-                    <form onSubmit={handleSubmit}>
-                        <TextField name="name" label="name" onChange={handelChange} />
-                        <br /><br />
-                        <TextField name="email" label="Email" onChange={handelChange} />
-                        <br /><br />
-                        <TextField name="password" label="Password" onChange={handelChange} />
-                        <br /><br />
-                        <Button type="submit">Submit</Button>
-                    </form>
-                </Box>
-        </>
+        </form>
+        <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
+            <DialogTitle>Verify Your Email</DialogTitle>
+            <DialogContent>
+                <DialogContentText>
+                    Please enter the verification code sent to your email.
+                </DialogContentText>
+                <TextField
+                    autoFocus
+                    margin="dense"
+                    label="Verification Code"
+                    fullWidth
+                    value={inputCode}
+                    onChange={(e) => setInputCode(e.target.value)}
+                />
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={() => setIsDialogOpen(false)} color="primary">
+                    Cancel
+                </Button>
+                <Button onClick={handleVerifyCode} color="primary">
+                    Verify
+                </Button>
+            </DialogActions>
+        </Dialog>
+    </Box>
     );
 })
 
