@@ -2,7 +2,7 @@ import { observer } from "mobx-react-lite";
 import fileStore from "./FileStore";
 import { useEffect, useState } from "react";
 import NoFileShare from "../Massages/NoFileShare";
-import { Box, Collapse, Grid2 as Grid, Typography } from "@mui/material";
+import { Box, Collapse, Grid, Typography } from "@mui/material";
 import FileCardShare from "./FileCardShare";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import userStore from "../Users/UserStore";
