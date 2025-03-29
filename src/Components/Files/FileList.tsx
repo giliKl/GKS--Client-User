@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { observer } from "mobx-react-lite";
-import { Box, Typography, Grid2 as Grid, Collapse } from "@mui/material";
+import { Box, Typography, Grid, Collapse } from "@mui/material";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import fileStore from "./FileStore";
 import userStore from "../Users/UserStore";

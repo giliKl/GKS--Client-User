@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, Typography, List, ListItem, ListItemIcon, ListItemText, Grid2 as Grid, Box } from '@mui/material';
+import { Card, CardContent, CardHeader, Typography, List, ListItem, ListItemIcon, ListItemText,  Grid, Box } from '@mui/material';
 import { Lock, VisibilityOff, Sync, Verified, Speed } from '@mui/icons-material';
 import logo from "../../public/logo.jpg";
 
