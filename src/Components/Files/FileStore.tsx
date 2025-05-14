@@ -113,12 +113,12 @@ url :String= `${import.meta.env.VITE_API_URL}/File`;
       console.log(response.data);
 
       await this.fetchFiles();
-      alert("Upload successful");
+      return response.data.message || "Upload successful";
     } catch (error: any) {
       runInAction(() => {
         this.error = error.response?.data?.message || "Error uploading file";
       });
-      alert("Upload failed");
+      throw new Error(error.response?.data?.message || "Upload failed");
     } finally {
       runInAction(() => {
         this.loading = false;
@@ -132,15 +132,20 @@ url :String= `${import.meta.env.VITE_API_URL}/File`;
       runInAction(() => {
         this.loading = true;
       });
-      await axios.delete(`${this.url}/${fileId}`);
+    
+      var response = await axios.delete(`${this.url}/${fileId}`);
       runInAction(() => {
         this.error = null;
       });
       await this.fetchFiles();
+      return response.data.message || "deleting successful";
     } catch (error: any) {
       runInAction(() => {
         this.error = error.response?.data?.message || "Error deleting file";
+        
       });
+      throw new Error(error.response?.data?.message || "deleting failed");
+
     } finally {
       runInAction(() => {
         this.loading = false;
@@ -164,14 +169,14 @@ url :String= `${import.meta.env.VITE_API_URL}/File`;
         this.error = null;
       }
       );
-      await this.fetchFiles();
-      alert("File edited successfully");
+       await this.fetchFiles();
+      return "editing successful";
     }
     catch (error: any) {
       runInAction(() => {
         this.error = error.response?.data?.message || "Error editing file";
       });
-      alert("File editing failed");
+      throw new Error(error.response?.data?.message || "editing failed");
     }
   }
 
@@ -189,15 +194,28 @@ url :String= `${import.meta.env.VITE_API_URL}/File`;
         this.error = null;
         this.loading = false;
         console.log(response.data);
-        userStore.sendEmail(email, `GKS ${userStore.user.name} Shared File with you`, `${userStore.user.name}shared with you the File : ${file.name} \nThe encrypted password is:\n ${response.data.password}`);
-
+        userStore.sendEmail(
+          email,
+          `📁 GKS - ${userStore.user.name} shared a file with you`,
+          `Hello,\n
+        ${userStore.user.name} has shared the following file with you: 🗂️ "${file.name}" 🙂\n
+        🔑 The encrypted password to access the file is:\n
+        ${response.data.password}\n\n
+        💬  If you have any questions, feel free to reach out to the sender.\n\n
+        Best regards,\n
+        GKS Security`
+        );
+        
       });
+      return response.data.message || "sharing successful";
 
     }
     catch (error: any) {
       runInAction(() => {
         this.error = error.response?.data?.message || "Error sharing file";
       });
+      throw new Error(error.response?.data?.message || "sharing failed");
+
     }
   }
 

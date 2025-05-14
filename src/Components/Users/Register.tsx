@@ -65,7 +65,7 @@ const Register = observer(() => {
         }
     }
     const handleVerifyCode = async () => {
-        if (inputCode === verificationCode) {
+        if (inputCode == verificationCode) {
             const name = nameRef.current?.value;
             const email = emailRef.current?.value;
             const password = passwordRef.current?.value;

@@ -1,5 +1,5 @@
 import About from "../About"
-import UserActivityGraphs from "./UserActivityChart"
+import UserActivityGraphs from "./UserActivityGraphs"
 
 
 function Dashboard() {

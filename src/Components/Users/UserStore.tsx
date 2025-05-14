@@ -74,16 +74,20 @@ class UserStore {
                     sessionStorage.setItem("loginTime", Date.now().toString());
                 }
                 const subject = "Welcome to GKS!";
-                const body = `Hello ${user.name},\n\nWelcome to GKS! Your account has been successfully created.\n\nBest regards,\nGKS Team`;
+                const body = `Hello ${user.name} 💙! ,\n\n Welcome to GKS!🔑\n Your account has been successfully created 😍😍.\n\nBest regards,\nGKS Team`;
                 this.sendEmail(user.email!, subject, body);
 
                 this.loading = false;
+                return response.data.message || "Registration successful";
+
             });
         } catch (error: any) {
             runInAction(() => {
                 this.error = error.message || "Failed to register user";
                 this.loading = false;
             });
+            throw new Error(error.response?.data?.message || "Registration failed");
+
         }
     }
 
@@ -103,12 +107,15 @@ class UserStore {
                     sessionStorage.setItem('userId', this.user.id.toString());
                     sessionStorage.setItem("loginTime", Date.now().toString());
                 }
+                return response.data.message || "Login successful";
+
             });
         } catch (error: any) {
             runInAction(() => {
                 this.error = error.message || "Failed to login";
                 this.loading = false;
             });
+            throw new Error(error.response?.data?.message || "Login failed");
         }
     }
 

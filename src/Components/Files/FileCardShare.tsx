@@ -42,7 +42,6 @@ const FileCardShare = ({ file, filetype }: { file: UserFileType, filetype: strin
 
       setOriginalBlob(fileBlob);
       setFileUrl(fileURL);
-    //   if (response.headers["content-type"] === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
         const arrayBuffer = await fileBlob.arrayBuffer();
         setFileContent(arrayBuffer);
     

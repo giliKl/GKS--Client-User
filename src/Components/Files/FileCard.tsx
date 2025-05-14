@@ -1,9 +1,8 @@
 import { Description, InsertDriveFile, MoreVert, PictureAsPdf } from "@mui/icons-material";
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Menu, MenuItem, Paper, TextField, Typography } from "@mui/material";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Menu, MenuItem, Paper, TextField, Typography, Snackbar } from "@mui/material";
 import { JSX, useState } from "react";
 import { UserFileType } from "../../Types/UserFileType";
 import fileStore from "./FileStore";
-
 
 const fileIcons: Record<string, JSX.Element> = {
     "application/pdf": <PictureAsPdf fontSize="large" color="error" />,
@@ -18,31 +17,56 @@ const FileCard = ({ file, filetype }: { file: UserFileType; filetype: string }) 
     const [openEdit, setOpenEdit] = useState(false);
     const [email, setEmail] = useState("");
     const [newFileName, setNewFileName] = useState(file.name);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState("");
+
+    const handleSnackbarClose = () => {
+        setSnackbarOpen(false);
+    };
 
     const handleDelete = async () => {
-        // שליחת בקשה לשרת למחיקת הקובץ
-        fileStore.deleteFile(file.id);
-        setOpenDelete(false);
+        try {
+            console.log("Attempting to delete file...");
+            await fileStore.deleteFile(file.id);
+            setSnackbarMessage("File deleted successfully!");
+            setSnackbarOpen(true);
+            setOpenDelete(false);
+        } catch (error) {
+            console.error("Error deleting file:", error);
+            setSnackbarMessage("Error deleting file.");
+            setSnackbarOpen(true);
+        }
     };
 
     const handleShare = async () => {
-        fileStore.shareFile(file, email);
-        setOpenShare(false);
+        try {
+            console.log("Attempting to share file...");
+            await fileStore.shareFile(file, email);
+            setSnackbarMessage("File shared successfully!");
+            setSnackbarOpen(true);
+            setOpenShare(false);
+        } catch (error) {
+            setOpenShare(false);
+            setSnackbarMessage("Error sharing file.");
+            setSnackbarOpen(true);
+            console.error("Error sharing file:", error);
+
+        }
     };
 
-    /*************  ✨ Codeium Command 🌟  *************/
     const handleEdit = async () => {
         try {
+            console.log("Attempting to edit file...");
             await fileStore.editFile(file.id, newFileName);
+            setSnackbarMessage("File edited successfully!");
+            setSnackbarOpen(true);
             setOpenEdit(false);
         } catch (error) {
             console.error("Error editing file:", error);
+            setSnackbarMessage("Error editing file.");
+            setSnackbarOpen(true);
         }
-        // שליחת בקשה לעריכת שם הקובץ
-        fileStore.editFile(file.id, newFileName);
-        setOpenEdit(false);
     };
-    /******  6e75e124-8199-49ff-8eb2-3482dbcf5323  *******/
 
     return (
         <>
@@ -78,7 +102,7 @@ const FileCard = ({ file, filetype }: { file: UserFileType; filetype: string }) 
             <Dialog open={openDelete} onClose={() => setOpenDelete(false)}>
                 <DialogTitle>Delete File</DialogTitle>
                 <DialogContent>
-                    <Typography>     Are you sure you want to delete {file.name}?</Typography>
+                    <Typography>Are you sure you want to delete {file.name}?</Typography>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpenDelete(false)}>Cancel</Button>
@@ -90,13 +114,21 @@ const FileCard = ({ file, filetype }: { file: UserFileType; filetype: string }) 
             <Dialog open={openEdit} onClose={() => setOpenEdit(false)}>
                 <DialogTitle> Edit File</DialogTitle>
                 <DialogContent>
-                    <TextField label=" New File Name" fullWidth value={newFileName} onChange={(e) => setNewFileName(e.target.value)} />
+                    <TextField label="New File Name" fullWidth value={newFileName} onChange={(e) => setNewFileName(e.target.value)} />
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpenEdit(false)}>Cancel</Button>
                     <Button onClick={handleEdit} color="primary">Save Changes</Button>
                 </DialogActions>
             </Dialog>
+
+            {/* Snackbar for status messages */}
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={6000}
+                onClose={handleSnackbarClose}
+                message={snackbarMessage}
+            />
         </>
     );
 };
