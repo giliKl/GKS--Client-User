@@ -1,5 +1,5 @@
 import {Drawer,List, ListItem,ListItemButton,ListItemIcon,ListItemText,IconButton,Tooltip,Divider,Box,CssBaseline,styled} from "@mui/material";
-import {FileUpload,FolderShared,Description,Dashboard,Info,Menu as MenuIcon,ChevronLeft as ChevronLeftIcon} from '@mui/icons-material';
+import {FileUpload,FolderShared,Description,Dashboard,Info,ChevronLeft as ChevronLeftIcon} from '@mui/icons-material';
 import { Link, useNavigate } from "react-router";
 import { useState } from "react";
 import UserDetails from "./Users/UserDetails";
