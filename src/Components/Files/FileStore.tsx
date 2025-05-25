@@ -8,7 +8,7 @@ class FileStore {
   fileShare: UserFileType[] = [];
   loading: boolean = false;
   error: string | null = null;
-url :String= `${import.meta.env.VITE_API_URL}/File`;
+  url: String = `${import.meta.env.VITE_API_URL}/File`;
 
 
 
@@ -20,7 +20,7 @@ url :String= `${import.meta.env.VITE_API_URL}/File`;
   private setupInterceptor() {
     axios.interceptors.request.use((config) => {
       const token = sessionStorage.getItem('token');
-      if (config.headers["Content-Type"]!="multipart/form-data")
+      if (config.headers["Content-Type"] != "multipart/form-data")
         config.headers.set("Content-Type", "application/json");
       if (token) {
         config.headers.set("Authorization", `Bearer ${token}`);
@@ -32,21 +32,21 @@ url :String= `${import.meta.env.VITE_API_URL}/File`;
   }
 
 
- 
+
   async fetchFiles() {
     try {
       runInAction(() => {
         this.loading = true;
       });
 
-      if(userStore.user.id == null) {
-        userStore.user.id =userStore.getUserId();
+      if (userStore.user.id == null) {
+        userStore.user.id = userStore.getUserId();
       }
-      const response = await axios.get(`${this.url}/user/${userStore.user.id }`);
+      const response = await axios.get(`${this.url}/user/${userStore.user.id}`);
 
       runInAction(() => {
         this.files = response.data;
-        this.error = null; 
+        this.error = null;
       });
     } catch (error: any) {
       runInAction(() => {
@@ -132,7 +132,7 @@ url :String= `${import.meta.env.VITE_API_URL}/File`;
       runInAction(() => {
         this.loading = true;
       });
-    
+
       var response = await axios.delete(`${this.url}/${fileId}`);
       runInAction(() => {
         this.error = null;
@@ -142,7 +142,7 @@ url :String= `${import.meta.env.VITE_API_URL}/File`;
     } catch (error: any) {
       runInAction(() => {
         this.error = error.response?.data?.message || "Error deleting file";
-        
+
       });
       throw new Error(error.response?.data?.message || "deleting failed");
 
@@ -169,7 +169,7 @@ url :String= `${import.meta.env.VITE_API_URL}/File`;
         this.error = null;
       }
       );
-       await this.fetchFiles();
+      await this.fetchFiles();
       return "editing successful";
     }
     catch (error: any) {
@@ -205,7 +205,7 @@ url :String= `${import.meta.env.VITE_API_URL}/File`;
         Best regards,\n
         GKS Security`
         );
-        
+
       });
       return response.data.message || "sharing successful";
 
@@ -226,7 +226,7 @@ url :String= `${import.meta.env.VITE_API_URL}/File`;
         this.loading = true;
       });
       const response = await axios.post(`${this.url}/decrypt-file/`,
-        { Id: file.id,Passwopassword: file.filePassword },
+        { Id: file.id, password: file.filePassword },
         { responseType: "blob" }
       );
       const blob = new Blob([response.data], { type: file.fileType });
@@ -248,32 +248,33 @@ url :String= `${import.meta.env.VITE_API_URL}/File`;
   }
 
 
-  async getSharedfile(email: string, id: number, password: string): Promise<Blob | undefined> {
+  async getSharedfile(email: string, id: number, password: string): Promise<Blob> {
+    runInAction(() => {
+      this.loading = true;
+      this.error = null;
+    });
+  
     try {
-        runInAction(() => {
-            this.loading = true;
-        });
-        
-        const response = await axios.post(
-            `${this.url}/CheckingIsAllowedView/${email}`,
-            { Id: id, password },
-            { responseType: "blob" }
-        );
-
-        if (response.status !== 200) throw new Error("Failed to fetch file");
-
-        return new Blob([response.data], { type: response.headers["content-type"] });
+      const response = await axios.post(
+        `${this.url}/CheckingIsAllowedView/${email}`,
+        { Id: id, password },
+        { responseType: "blob" }
+      );
+  
+      if (response.status !== 200) {
+        throw new Error("Failed to fetch file");
+      }
+  
+      return new Blob([response.data], { type: response.headers["content-type"] });
     } catch (error) {
-        runInAction(() => {
-            this.error = "Error fetching shared file";
-        });
-        console.error("Error fetching file:", error);
-    } finally {
-        runInAction(() => {
-            this.loading = false;
-        });
+      runInAction(() => {
+        this.loading = false;
+      });
+  
+      throw error;
     }
-}
+  }
+  
 }
 
 

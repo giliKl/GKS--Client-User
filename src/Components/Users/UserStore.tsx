@@ -83,11 +83,19 @@ class UserStore {
             });
         } catch (error: any) {
             runInAction(() => {
-                this.error = error.message || "Failed to register user";
+                // ננסה להוציא שגיאה מהשרת
+                const serverError =
+                    error.response?.data?.error ||
+                    error.response?.data?.message ||
+                    error.message ||
+                    "Failed to register user";
+    
+                this.error = serverError;
                 this.loading = false;
             });
-            throw new Error(error.response?.data?.message || "Registration failed");
-
+    
+            // נזרוק את השגיאה כדי שקומפוננט אחר יוכל לטפל בה אם צריך
+            throw new Error(this.error || "Registration failed");
         }
     }
 
@@ -112,10 +120,19 @@ class UserStore {
             });
         } catch (error: any) {
             runInAction(() => {
-                this.error = error.message || "Failed to login";
+                // ננסה להוציא שגיאה מהשרת
+                const serverError =
+                    error.response?.data?.error ||
+                    error.response?.data?.message ||
+                    error.message ||
+                    "login Failed ";
+    
+                this.error = serverError;
                 this.loading = false;
             });
-            throw new Error(error.response?.data?.message || "Login failed");
+    
+            // נזרוק את השגיאה כדי שקומפוננט אחר יוכל לטפל בה אם צריך
+            throw new Error(this.error || "login failed");
         }
     }
 

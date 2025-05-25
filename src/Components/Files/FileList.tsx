@@ -1,76 +1,436 @@
-import { useEffect, useState } from "react";
-import { observer } from "mobx-react-lite";
-import { Box, Typography, Grid, Collapse } from "@mui/material";
-import { ExpandLess, ExpandMore } from "@mui/icons-material";
-import fileStore from "./FileStore";
-import userStore from "../Users/UserStore";
-import Nofile from "../Massages/NoFile";
-import { UserFileType } from "../../Types/UserFileType";
-import FileCard from "./FileCard";
-
+import { useEffect, useState } from "react"
+import { observer } from "mobx-react-lite"
+import {
+  Box,
+  Typography,
+  Grid,
+  Card,
+  CardContent,
+  Collapse,
+  IconButton,
+  Paper,
+  Chip,
+  TextField,
+  InputAdornment,
+  Skeleton,
+  Alert,
+  Button,
+  Avatar,
+  Fade,
+  Zoom,
+} from "@mui/material"
+import {
+  ExpandLess,
+  Search,
+  CloudUpload,
+  Folder,
+  PictureAsPdf,
+  CalendarToday,
+  FilePresent,
+  Refresh,
+} from "@mui/icons-material"
+import { UserFileType } from "../../Types/UserFileType"
+import userStore from "../Users/UserStore"
+import fileStore from "./FileStore"
+import Nofile from "../Massages/NoFile"
+import FileCard from "./FileCard"
+import { useNavigate } from "react-router"
 
 const FileList = observer(() => {
-  const [openFiles, setOpenFiles] = useState<{ [key: string]: boolean }>({});
+  const navigate = useNavigate(); 
+  const [openDates, setOpenDates] = useState<{ [key: string]: boolean }>({})
+  const [searchTerm, setSearchTerm] = useState("")
+  const [isLoading, setIsLoading] = useState(true)
+  const [filteredFiles, setFilteredFiles] = useState<UserFileType[]>([])
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        if (!userStore.user.id && sessionStorage.getItem('userId')) {
-          await userStore.fetchUser(parseInt(sessionStorage.getItem('userId') as string));
+        const userId = sessionStorage.getItem("userId")
+        if (!userId) {
+          navigate("/login")
+          return
         }
-        await fileStore.fetchFiles();
+
+        if (!userStore.user.id) {
+          await userStore.fetchUser(Number.parseInt(userId))
+        }
+
+        await fileStore.fetchFiles()
+        setFilteredFiles(fileStore.files || [])
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching data:", error)
+      } finally {
+        setIsLoading(false)
       }
-    };
+    }
 
-    fetchData();
-  }, []);
+    fetchData()
+  }, [navigate])
 
-  if (fileStore.error) return <div>Error: {fileStore.error}</div>;
-if(fileStore.files?.length === 0) return <Nofile/>;
-  const groupedFiles = fileStore.files?.reduce((acc, file) => {
-    const dateKey = new Date(file.createdAt).toLocaleDateString();
-    acc[dateKey] = acc[dateKey] || [];
-    acc[dateKey].push(file);
-    return acc;
-  }, {} as Record<string, UserFileType[]>);
+  useEffect(() => {
+    if (fileStore.files) {
+      const filtered = fileStore.files.filter((file) => file.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      setFilteredFiles(filtered)
+    }
+  }, [searchTerm, fileStore.files])
 
-  // פונקציה לשינוי מצב התפשטות של קובץ לפי תאריך
-  const handleToggle = (date: string) => {
-    setOpenFiles(prevState => ({
-      ...prevState,
-      [date]: !prevState[date]
-    }));
-  };
+  const handleToggleDate = (date: string) => {
+    setOpenDates((prev) => ({
+      ...prev,
+      [date]: !prev[date],
+    }))
+  }
+
+  const handleRefresh = async () => {
+    setIsLoading(true)
+    try {
+      await fileStore.fetchFiles()
+      setFilteredFiles(fileStore.files || [])
+    } catch (error) {
+      console.error("Error refreshing files:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <Box sx={{ p: 4 }}>
+        {/* Header Skeleton */}
+        <Paper elevation={2} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+          <Skeleton variant="text" width="40%" height={40} />
+          <Skeleton variant="text" width="60%" height={24} sx={{ mt: 1 }} />
+          <Box sx={{ display: "flex", gap: 2, mt: 3 }}>
+            <Skeleton variant="rectangular" width={300} height={56} sx={{ borderRadius: 1 }} />
+            <Skeleton variant="rectangular" width={120} height={56} sx={{ borderRadius: 1 }} />
+          </Box>
+        </Paper>
+
+        {/* Files Skeleton */}
+        <Box sx={{ space: 3 }}>
+          {[1, 2].map((item) => (
+            <Card key={item} elevation={2} sx={{ mb: 3, borderRadius: 2 }}>
+              <CardContent>
+                <Skeleton variant="text" width="30%" height={32} />
+                <Grid container spacing={3} sx={{ mt: 2 }}>
+                  {[1, 2, 3, 4].map((card) => (
+                    <Grid key={card}>
+                      <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
+                    </Grid>
+                  ))}
+                </Grid>
+              </CardContent>
+            </Card>
+          ))}
+        </Box>
+      </Box>
+    )
+  }
+
+  if (fileStore.error) {
+    return (
+      <Box sx={{ p: 4 }}>
+        <Alert
+          severity="error"
+          action={
+            <Button color="inherit" size="small" onClick={handleRefresh}>
+              Try Again
+            </Button>
+          }
+          sx={{ borderRadius: 2 }}
+        >
+          Error loading files: {fileStore.error}
+        </Alert>
+      </Box>
+    )
+  }
+
+  if (!fileStore.files || fileStore.files.length === 0) {
+    return <Nofile />
+  }
+
+  // Group files by date
+  const groupedFiles = filteredFiles.reduce(
+    (acc, file) => {
+      const dateKey = new Date(file.createdAt).toLocaleDateString()
+      acc[dateKey] = acc[dateKey] || []
+      acc[dateKey].push(file)
+      return acc
+    },
+    {} as Record<string, UserFileType[]>,
+  )
+
+  const totalFiles = fileStore.files.length
+  const filteredCount = filteredFiles.length
 
   return (
-    <Box sx={{ p: 3 }}>
-      {groupedFiles && Object.entries(groupedFiles).map(([date, files]) => {
-        const isOpen = !openFiles[date] || false;
-        return (
-          <Box key={date} sx={{ mb: 3 }}>
-            <Typography
-              variant="h6"
-              onClick={() => handleToggle(date)}
-              sx={{ cursor: "pointer", display: "flex", alignItems: "center" }}
-            >
-              {isOpen ? <ExpandLess /> : <ExpandMore />} Uploaded on: {date}
-            </Typography>
-            <Collapse in={isOpen}>
-              <Grid container spacing={2} mt={1}>
-                {files.map(file => (
-                  <Grid key={file.id}>
-                    <FileCard file={file} filetype={file.fileType} />
-                  </Grid>
-                ))}
-              </Grid>
-            </Collapse>
-          </Box>
-        );
-      })}
-    </Box>
-  );
-});
+    <Box sx={{ p: 4, backgroundColor: "#f8f9fa", minHeight: "100vh" }}>
+      {/* Header Section */}
+      <Fade in timeout={800}>
+        <Paper
+          elevation={3}
+          sx={{
+            p: 4,
+            mb: 4,
+            borderRadius: 3,
+            background: "linear-gradient(135deg, #579FBA 0%, #3d7a94 100%)",
+            color: "white",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: -50,
+              right: -50,
+              width: 200,
+              height: 200,
+              borderRadius: "50%",
+              backgroundColor: "rgba(255,255,255,0.1)",
+            }}
+          />
+          <Box sx={{ position: "relative", zIndex: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <Avatar
+                sx={{
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                  mr: 2,
+                  width: 56,
+                  height: 56,
+                }}
+              >
+                <Folder sx={{ fontSize: 32 ,color:"white"}} />
+              </Avatar>
+              <Box>
+                <Typography variant="h4" component="h1" fontWeight="bold">
+                  My Files
+                </Typography>
+                <Typography variant="h6" sx={{ opacity: 0.9 }}>
+                  Secure Document Management
+                </Typography>
+              </Box>
+            </Box>
 
-export default FileList;
+            <Box sx={{ display: "flex", gap: 3, mt: 3 }}>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <FilePresent sx={{ mr: 1 ,color:"white"}} />
+                <Typography variant="body1">
+                  <strong>{totalFiles}</strong> Total Files
+                </Typography>
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <PictureAsPdf sx={{ mr: 1 ,color:"white"}} />
+                <Typography variant="body1">PDF Documents</Typography>
+              </Box>
+            </Box>
+          </Box>
+        </Paper>
+      </Fade>
+
+      {/* Search and Filter Section */}
+      <Zoom in timeout={600}>
+        <Paper elevation={2} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+          <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
+            <TextField
+              placeholder="Search files..."
+              variant="outlined"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              sx={{
+                flexGrow: 1,
+                minWidth: 300,
+                "& .MuiOutlinedInput-root": {
+                  "&:hover fieldset": {
+                    borderColor: "#579FBA",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#579FBA",
+                  },
+                },
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search color="action" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Button
+              variant="outlined"
+              startIcon={<Refresh sx={{color: "#fff"}}/>}
+              onClick={handleRefresh}
+              sx={{
+                borderColor: "#579FBA",
+                color: "#fff",
+                "&:hover": {
+                  borderColor: "#3d7a94",
+                  backgroundColor: "rgba(87, 159, 186, 0.04)",
+                },
+              }}
+            >
+              Refresh
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<CloudUpload sx={{color: "#fff"}}/>}
+              onClick={() => navigate("/upload")}
+              sx={{
+                backgroundColor: "#579FBA",
+                "&:hover": {
+                  backgroundColor: "#3d7a94",
+                },
+              }}
+            >
+              Upload File
+            </Button>
+          </Box>
+
+          {searchTerm && (
+            <Box sx={{ mt: 2 }}>
+              <Chip
+                label={`${filteredCount} of ${totalFiles} files`}
+                color="primary"
+                variant="outlined"
+                sx={{
+                  borderColor: "#579FBA",
+                  color: "#579FBA",
+                }}
+              />
+            </Box>
+          )}
+        </Paper>
+      </Zoom>
+
+      {/* Files Section */}
+      <Box sx={{ space: 3 }}>
+        {Object.entries(groupedFiles).length === 0 ? (
+          <Paper elevation={2} sx={{ p: 4, textAlign: "center", borderRadius: 2 }}>
+            <Typography variant="h6" color="text.secondary">
+              No files found matching your search.
+            </Typography>
+          </Paper>
+        ) : (
+          Object.entries(groupedFiles).map(([date, files], index) => {
+            const isOpen = openDates[date] !== false // Default to open
+
+            return (
+              <Fade in timeout={800 + index * 200} key={date}>
+                <Card
+                  elevation={3}
+                  sx={{
+                    mb: 3,
+                    borderRadius: 2,
+                    overflow: "hidden",
+                    border: "1px solid rgba(87, 159, 186, 0.1)",
+                    "&:hover": {
+                      boxShadow: "0 8px 25px rgba(87, 159, 186, 0.15)",
+                    },
+                    transition: "all 0.3s ease",
+                  }}
+                >
+                  <CardContent
+                    sx={{
+                      p: 0,
+                      "&:last-child": { pb: 0 },
+                    }}
+                  >
+                    {/* Date Header */}
+                    <Box
+                      onClick={() => handleToggleDate(date)}
+                      sx={{
+                        p: 3,
+                        cursor: "pointer",
+                        backgroundColor: "rgba(87, 159, 186, 0.05)",
+                        borderBottom: "1px solid rgba(87, 159, 186, 0.1)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        "&:hover": {
+                          backgroundColor: "rgba(87, 159, 186, 0.08)",
+                        },
+                        transition: "background-color 0.2s ease",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                        <Avatar
+                          sx={{
+                            backgroundColor: "#579FBA",
+                            mr: 2,
+                            width: 40,
+                            height: 40,
+                          }}
+                        >
+                          <CalendarToday sx={{color: "#fff"}}/>
+                        </Avatar>
+                        <Box>
+                          <Typography variant="h6" fontWeight="bold" color="#579FBA">
+                            {date}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {files.length} file{files.length !== 1 ? "s" : ""} uploaded
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <IconButton
+                        sx={{
+                          color: "#579FBA",
+                          transform: isOpen ? "rotate(0deg)" : "rotate(-90deg)",
+                          transition: "transform 0.3s ease",
+                        }}
+                      >
+                        <ExpandLess />
+                      </IconButton>
+                    </Box>
+
+                    {/* Files Grid */}
+                    <Collapse in={isOpen} timeout={400}>
+                      <Box sx={{ p: 3 }}>
+                        <Grid container spacing={3}>
+                          {files.map((file, fileIndex) => (
+                            <Grid  key={file.id}>
+                              <Zoom in timeout={600 + fileIndex * 100}>
+                                <div>
+                                  <FileCard file={file} filetype={file.fileType} />
+                                </div>
+                              </Zoom>
+                            </Grid>
+                          ))}
+                        </Grid>
+                      </Box>
+                    </Collapse>
+                  </CardContent>
+                </Card>
+              </Fade>
+            )
+          })
+        )}
+      </Box>
+
+      {/* Footer Stats */}
+      {filteredFiles.length > 0 && (
+        <Fade in timeout={1200}>
+          <Paper
+            elevation={2}
+            sx={{
+              p: 3,
+              mt: 4,
+              borderRadius: 2,
+              backgroundColor: "rgba(87, 159, 186, 0.02)",
+              border: "1px solid rgba(87, 159, 186, 0.1)",
+            }}
+          >
+            <Typography variant="body2" color="text.secondary" align="center">
+              Showing {filteredCount} of {totalFiles} files • Secure storage with end-to-end encryption
+            </Typography>
+          </Paper>
+        </Fade>
+      )}
+    </Box>
+  )
+})
+
+export default FileList
+
