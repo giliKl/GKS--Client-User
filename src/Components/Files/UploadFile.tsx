@@ -27,6 +27,7 @@ import {
   AttachFile,
 } from "@mui/icons-material"
 import userStore from "../Users/UserStore"
+import fileStore from "./FileStore"
 import { useNavigate } from "react-router"
 
 const UploadFile = observer(() => {
@@ -195,20 +196,22 @@ const UploadFile = observer(() => {
     setIsLoading(true)
     setAlertInfo(null)
 
-    try {
+     try {
+    // קריאה ל-fileStore
+    const message = await fileStore.uploadFile(file, fileName, password, file.type);
 
-      setAlertInfo({
-        severity: "success",
-        message: "File uploaded successfully! Redirecting to your files...",
-      })
+    setAlertInfo({
+      severity: "success",
+      message: message || "File uploaded successfully! Redirecting to your files...",
+    });
 
-      // Reset form
-      setFile(null)
-      setFileName("")
-      setPassword("")
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
-      }
+    // איפוס
+    setFile(null);
+    setFileName("");
+    setPassword("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
 
       // Redirect after showing success message
       setTimeout(() => {
